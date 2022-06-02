@@ -1,0 +1,59 @@
+<head>
+  <script>
+    const price = 1
+  
+    fetch(`http://localhost:8080/createPayment?amount=${price}&data=hat`)
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('paymentPrice').innerHTML = `Amount: ${price} VITE`
+        document.getElementById('paymentAddress').innerHTML = `Address: ${data.walletAddress}`
+        document.getElementById('paymentId').innerHTML = `Payment ID(Memo): ${data.paymentId}`
+  
+        setInterval(async () => {
+          fetch(`http://localhost:8080/getPaymentStatus?paymentId=${data.paymentId}`)
+            .then(response => response.json())
+            .then(data => {
+              if (data.status === 'WAITING_CONFIRM') {
+                document.getElementById('timeLeft').innerHTML = 'Waiting transaction to be confirmed. This will take about 180 seconds...'
+              } else if (data.status === 'COMPLETED') {
+                document.getElementById('timeLeft').innerHTML = 'Completed :)'
+              } else {
+                const timeLeft = Math.floor(data.timeLeft / 1000)
+                document.getElementById('timeLeft').innerHTML = `Time left: ${timeLeft} seconds`
+              }
+            })
+        }, 1000)
+      })
+  </script>
+  
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+</head>
+
+<body>
+  <div class="card">
+    <div class="card-content">
+      <p class="title">
+        Payment
+      </p>
+      <p class="subtitle">
+        Buying one party hat
+      </p>
+    </div>
+    <footer id="timeLeft" class="card-footer">
+      Loading...
+    </footer>
+    <footer class="card-footer">
+      <p class="card-footer-item">
+        <span id="paymentPrice">~ VITE</span>
+      </p>
+    </footer>
+    <footer class="card-footer">
+      <p class="card-footer-item">
+        <span id="paymentAddress">Address: vite_....</span>
+      </p>
+      <p class="card-footer-item">
+        <span id="paymentId">Payment ID(Memo): 12121212</span>
+      </p>
+    </footer>
+  </div>
+</body>
