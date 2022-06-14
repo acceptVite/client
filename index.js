@@ -1,38 +1,33 @@
-const { EventEmitter } = require('events')
 const http = require('http')
+const { EventEmitter } = require('events')
 
-class WebServer extends EventEmitter {
-  constructor(port) {
+module.exports = class acceptViteHandler extends EventEmitter {
+  constructor (port, readyCallback) {
     super()
 
-    const requestListener = async (req, res) => {
-      let body = ''
+    this._callbackServer = http.createServer(this._handleRequest)
+    this._callbackServer.listen(port)
 
-      req.on('data', function(data) {
-        body += data.toString()
+    if (typeof readyCallback === 'function') readyCallback()
+  }
+
+  async _handleRequest (req, res) {
+    let body = ''
+
+    req.on('data', function(data) {
+      body += data.toString()
+    })
+
+    req.on('end', () => {
+      this.emit('callback', JSON.parse(body))
+
+      res.writeHead(200, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': '*',
+        'version': 'v1.0'
       })
 
-      req.on('end', () => {
-        this.emit('request', JSON.parse(body))
-
-        res.writeHead(200, {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Headers': '*',
-          'version': 'v1.0'
-        })
-
-        res.end()
-      })
-    }
-    
-    const serverObject = http.createServer(requestListener)
-    serverObject.listen(port)
+      res.end()
+    })
   }
 }
-
-
-const webServer = new WebServer(1270)
-
-webServer.on('request', (data) => {
-  console.log(data)
-})
